@@ -23,24 +23,31 @@ class DataProcessor:
         info = self.df[self.df["Tên khách hàng"] == name_user].iloc[0]
         return info
     
+    def get_service(self):
+        return {
+            "1": ("Chuyển tiền", self.transfer_money)
+        }
+        
     def service(self, name_user):
-        print("\n--- DANH SÁCH DỊCH VỤ ---")
-        print("1. Chuyển tiền")
-        choice = input("Chọn dịch vụ: ")
-        match(choice):
-            case 1 | "Chuyển tiền" | '1':
-                self.transfer_money(name_user)
-
+        services = self.get_service()
+        print(f"Dịch vụ {type(self).__name__}")
+        for key,  (name_service, _) in services.items():
+            print(f"{key}: {name_service}")
+        choice = input("Nhập lựa chọn dịch vụ: ")
+        if choice in services:
+            services[choice][1](name_user)
+            
+            
     def transfer_money(self, sender):
         while True:
-            receiver = input("Nhập người nhận tiền: ")
+            receiver = input("Nhập người nhận tiền: ").upper()
             if receiver not in self.list_cus():
                 print("Không tồn tại người nhận tiền trong danh sách!")
                 continue
             if receiver == sender:
                 print("Rửa tiền à!")
                 continue
-
+            
             while True:
                 try: 
                     amount = float(input("Số tiền muốn chuyển: "))
@@ -65,23 +72,14 @@ class DataProcessor:
         def login_status(*args, **kwargs):
             name_user = args[0].upper()
             now = self.log_time(name_user, func.__name__)
-            if name_user == "ADMIN":
-                print(f"Đăng nhập với quyền ADMIN \n{now}")
-            else:
+            if name_user != "ADMIN":
                 if name_user in self.list_cus():
                     kwargs["info"] = self.info_cus(name_user)
                     info = kwargs["info"]
                     print(f"Đăng nhập với {name_user} \n{now}\n{info}")
                 else:
                     print("Người dùng không tồn tại")
-                    return 0
+            else:
+                print(f"Đăng nhập với quyền ADMIN \n{now}")
             return func(name_user, **kwargs)
         return login_status
-
-if __name__ == "__main__":
-    path = r"User_Data.xlsx"
-    processor = DataProcessor(path)
-
-    @processor.security_shield
-    def truy_cap(name_user, info = None):
-        processor.service(name_user)
